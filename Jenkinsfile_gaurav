@@ -16,7 +16,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Fetch Github Repository
-                git branch: 'main', url: 'https://github.com/Raja2248s/honors_assessment'
+                git branch: 'main', url: 'https://github.com/Raja2248s/honors_assessment.git'
+
             }
         }
         
