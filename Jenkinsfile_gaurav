@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven "Maven"  // Ensure Maven is installed
+        maven "maven"  // Ensure Maven is installed
     }
 
     environment {
