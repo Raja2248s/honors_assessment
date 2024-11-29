@@ -9,7 +9,7 @@ pipeline {
         EC2_USER = 'ec2-user'
         EC2_HOST = 'ec2-54-183-202-197.us-west-1.compute.amazonaws.com'
         PEM_FILE_PATH = 'C:/Program Files/Jenkins/devops.pem'  // Path to your AWS PEM file
-        JAR_NAME = 'honors_assesment-0.0.1-SNAPSHOT.jar' 
+        JAR_NAME = 'honors_assesment-0.0.1-SNAPSHOT.jar'
     }
 
     stages {
@@ -17,7 +17,6 @@ pipeline {
             steps {
                 // Fetch Github Repository
                 git branch: 'main', url: 'https://github.com/Raja2248s/honors_assessment.git'
-
             }
         }
         
@@ -35,11 +34,24 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Copy JAR file to the EC2 instance
-                    bat "scp -i \"${PEM_FILE_PATH}\" target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/"
+                    try {
+                        // Debugging: Output to check the build directory and the JAR file
+                        echo "JAR File Path: target/${JAR_NAME}"
 
-                    // Start the application on the EC2 server
-                    bat "ssh -i \"${PEM_FILE_PATH}\" ${EC2_USER}@${EC2_HOST} java -jar /home/ec2-user/${JAR_NAME}"
+                        // Copy JAR file to the EC2 instance
+                        echo "Copying JAR to EC2 instance..."
+                        bat "scp -i \"${PEM_FILE_PATH}\" target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/"
+                        
+                        // Check if the JAR file was copied successfully
+                        echo "Checking if the JAR file exists on EC2..."
+                        bat "ssh -i \"${PEM_FILE_PATH}\" ${EC2_USER}@${EC2_HOST} ls -l /home/ec2-user/${JAR_NAME}"
+
+                        // Start the application on the EC2 server
+                        echo "Starting application on EC2 instance..."
+                        bat "ssh -i \"${PEM_FILE_PATH}\" ${EC2_USER}@${EC2_HOST} java -jar /home/ec2-user/${JAR_NAME}"
+                    } catch (Exception e) {
+                        echo "Deployment failed: ${e.getMessage()}"
+                    }
                 }
             }
         }
