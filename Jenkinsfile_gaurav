@@ -34,11 +34,27 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Copy JAR file to the EC2 instance
-                    bat "scp -i \"${PEM_FILE_PATH}\" target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/"
+                    // Measure overall deploy time
+            def deployStartTime = System.currentTimeMillis()
+            echo "Starting deployment..."
 
-                    // Start the application on the EC2 server
-                    bat "ssh -i \"${PEM_FILE_PATH}\" ${EC2_USER}@${EC2_HOST} java -jar /home/ec2-user/${JAR_NAME}"
+            // Debug File Transfer (scp)
+            def scpStartTime = System.currentTimeMillis()
+            echo "Initiating file transfer to EC2..."
+            bat "scp -v -i \"${PEM_FILE_PATH}\" target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/"
+            def scpEndTime = System.currentTimeMillis()
+            echo "File transfer completed in ${(scpEndTime - scpStartTime) / 1000} seconds"
+
+            // Debug Application Startup (ssh)
+            def sshStartTime = System.currentTimeMillis()
+            echo "Starting the application on EC2..."
+            bat "ssh -v -i \"${PEM_FILE_PATH}\" ${EC2_USER}@${EC2_HOST} nohup java -jar /home/ec2-user/${JAR_NAME} > /home/ec2-user/app.log 2>&1 &"
+            def sshEndTime = System.currentTimeMillis()
+            echo "Application startup completed in ${(sshEndTime - sshStartTime) / 1000} seconds"
+
+            // Total deployment time
+            def deployEndTime = System.currentTimeMillis()
+            echo "Total deployment time: ${(deployEndTime - deployStartTime) / 1000} seconds"
                 }
             }
         }
