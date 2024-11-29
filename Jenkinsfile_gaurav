@@ -34,32 +34,32 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    try {
-                        // Debugging: Output to check the build directory and the JAR file
-                        echo "JAR File Path: target/${JAR_NAME}"
+                     try {
+                // Debugging: Output to check the build directory and the JAR file
+                echo "JAR File Path: target/${JAR_NAME}"
 
-                        // Test SSH Connectivity first (Check if you can SSH into the EC2 instance)
-                        echo "Testing SSH connectivity to EC2 instance..."
-                        bat "ssh -i \"${PEM_FILE_PATH}\" -v ${EC2_USER}@${EC2_HOST} echo 'SSH connection successful!'"
+                // Test SSH Connectivity first (Check if you can SSH into the EC2 instance)
+                echo "Testing SSH connectivity to EC2 instance..."
+                bat "ssh -i \"${PEM_FILE_PATH}\" -o UserKnownHostsFile=\"C:/Users/Acer/.ssh/known_hosts\" -v ${EC2_USER}@${EC2_HOST} echo 'SSH connection successful!'"
 
-                        // Timing the SCP command
-                        echo "Starting SCP to EC2 instance..."
-                        def startTime = System.currentTimeMillis()
-                        bat "scp -i \"${PEM_FILE_PATH}\" -v target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/"
-                        def endTime = System.currentTimeMillis()
-                        def timeTaken = (endTime - startTime) / 1000
-                        echo "SCP took ${timeTaken} seconds to complete."
+                // Timing the SCP command
+                echo "Starting SCP to EC2 instance..."
+                def startTime = System.currentTimeMillis()
+                bat "scp -i \"${PEM_FILE_PATH}\" -o UserKnownHostsFile=\"C:/Users/Acer/.ssh/known_hosts\" -v target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/"
+                def endTime = System.currentTimeMillis()
+                def timeTaken = (endTime - startTime) / 1000
+                echo "SCP took ${timeTaken} seconds to complete."
 
-                        // Check if the JAR file exists on EC2 after SCP
-                        echo "Checking if the JAR file exists on EC2..."
-                        bat "ssh -i \"${PEM_FILE_PATH}\" -v ${EC2_USER}@${EC2_HOST} ls -l /home/ec2-user/${JAR_NAME}"
+                // Check if the JAR file exists on EC2 after SCP
+                echo "Checking if the JAR file exists on EC2..."
+                bat "ssh -i \"${PEM_FILE_PATH}\" -o UserKnownHostsFile=\"C:/Users/Acer/.ssh/known_hosts\" -v ${EC2_USER}@${EC2_HOST} ls -l /home/ec2-user/${JAR_NAME}"
 
-                        // Start the application on the EC2 server
-                        echo "Starting application on EC2 instance..."
-                        bat "ssh -i \"${PEM_FILE_PATH}\" -v ${EC2_USER}@${EC2_HOST} java -jar /home/ec2-user/${JAR_NAME}"
-                    } catch (Exception e) {
-                        echo "Deployment failed: ${e.getMessage()}"
-                    }
+                // Start the application on the EC2 server
+                echo "Starting application on EC2 instance..."
+                bat "ssh -i \"${PEM_FILE_PATH}\" -o UserKnownHostsFile=\"C:/Users/Acer/.ssh/known_hosts\" -v ${EC2_USER}@${EC2_HOST} java -jar /home/ec2-user/${JAR_NAME}"
+            } catch (Exception e) {
+                echo "Deployment failed: ${e.getMessage()}"
+            }
                 }
             }
         }
