@@ -2,26 +2,27 @@ pipeline {
     agent any
 
     tools {
-        maven "maven"
+        maven "Maven"  // Ensure Maven is installed
     }
 
     environment {
         EC2_USER = 'ec2-user'
         EC2_HOST = 'ec2-54-183-202-197.us-west-1.compute.amazonaws.com'
-        PEM_FILE_PATH = 'C:/Users/Acer/Downloads/devops.pem'
-        JAR_NAME = 'honors_assesment-0.0.1-SNAPSHOT.jar'
+        PEM_FILE_PATH = 'C:/Program Files/Jenkins/devops.pem'  // Path to your AWS PEM file
+        JAR_NAME = 'honors_assesment-0.0.1-SNAPSHOT.jar' 
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Raja2248s/honors_assessment.git'
+                // Fetch Github Repository
+                git branch: 'main', url: 'https://github.com/Smitkhobragade/Honors-VII-sem.git'
             }
         }
-
+        
         stage('Build') {
             steps {
-                bat 'mvn clean install'
+                bat 'mvn clean install'  // Builds the project and generates JAR
             }
             post {
                 success {
@@ -33,26 +34,11 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    def deployStartTime = System.currentTimeMillis()
-                    echo "Starting deployment..."
+                    // Copy JAR file to the EC2 instance
+                    bat "scp -i \"${PEM_FILE_PATH}\" target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/"
 
-                    // File transfer using SCP with verbose logs
-                    def scpStartTime = System.currentTimeMillis()
-                    echo "Initiating file transfer to EC2..."
-                    sh "scp -v -i \"${PEM_FILE_PATH}\" target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/ > scp_output.log 2>&1"
-                    def scpEndTime = System.currentTimeMillis()
-                    echo "File transfer completed in ${(scpEndTime - scpStartTime) / 1000} seconds"
-
-                    // SSH and Application Startup
-                    def sshStartTime = System.currentTimeMillis()
-                    echo "Starting the application on EC2..."
-                    sh "ssh -v -i \"${PEM_FILE_PATH}\" ${EC2_USER}@${EC2_HOST} 'nohup java -jar /home/ec2-user/${JAR_NAME} > /home/ec2-user/app.log 2>&1 &'"
-                    def sshEndTime = System.currentTimeMillis()
-                    echo "Application startup completed in ${(sshEndTime - sshStartTime) / 1000} seconds"
-
-                    // Total deployment time
-                    def deployEndTime = System.currentTimeMillis()
-                    echo "Total deployment time: ${(deployEndTime - deployStartTime) / 1000} seconds"
+                    // Start the application on the EC2 server
+                    bat "ssh -i \"${PEM_FILE_PATH}\" ${EC2_USER}@${EC2_HOST} java -jar /home/ec2-user/${JAR_NAME}"
                 }
             }
         }
@@ -60,6 +46,7 @@ pipeline {
 
     post {
         success {
+            archiveArtifacts 'target/*.jar'
             echo 'Deployment successful!'
         }
         failure {
