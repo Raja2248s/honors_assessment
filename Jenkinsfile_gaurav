@@ -9,7 +9,7 @@ pipeline {
         HOME = 'C:/Users/Acer'
         EC2_USER = 'ec2-user'
         EC2_HOST = 'ec2-54-183-202-197.us-west-1.compute.amazonaws.com'
-        PEM_FILE_PATH = "C:/Users/Acer/Downloads/devops.pem"  // Path to your AWS PEM file
+        PEM_FILE_PATH = 'C:/Program Files/Jenkins/devops.pem'  // Path to your AWS PEM file
         JAR_NAME = 'honors_assesment-0.0.1-SNAPSHOT.jar'
     }
 
