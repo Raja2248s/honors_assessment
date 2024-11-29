@@ -2,27 +2,26 @@ pipeline {
     agent any
 
     tools {
-        maven "maven"  // Ensure Maven is installed
+        maven "maven"
     }
 
     environment {
         EC2_USER = 'ec2-user'
         EC2_HOST = 'ec2-54-183-202-197.us-west-1.compute.amazonaws.com'
-        PEM_FILE_PATH = 'C:/Users/Acer/Downloads/devops.pem'  // Path to your AWS PEM file
-        JAR_NAME = 'honors_assesment-0.0.1-SNAPSHOT.jar' 
+        PEM_FILE_PATH = 'C:/Users/Acer/Downloads/devops.pem'
+        JAR_NAME = 'honors_assesment-0.0.1-SNAPSHOT.jar'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Fetch Github Repository
                 git branch: 'main', url: 'https://github.com/Raja2248s/honors_assessment.git'
             }
         }
-        
+
         stage('Build') {
             steps {
-                bat 'mvn clean install'  // Builds the project and generates JAR
+                bat 'mvn clean install'
             }
             post {
                 success {
@@ -34,27 +33,26 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Measure overall deploy time
-            def deployStartTime = System.currentTimeMillis()
-            echo "Starting deployment..."
+                    def deployStartTime = System.currentTimeMillis()
+                    echo "Starting deployment..."
 
-            // Debug File Transfer (scp)
-            def scpStartTime = System.currentTimeMillis()
-            echo "Initiating file transfer to EC2..."
-            bat "scp -v -i \"${PEM_FILE_PATH}\" target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/"
-            def scpEndTime = System.currentTimeMillis()
-            echo "File transfer completed in ${(scpEndTime - scpStartTime) / 1000} seconds"
+                    // File transfer using SCP with verbose logs
+                    def scpStartTime = System.currentTimeMillis()
+                    echo "Initiating file transfer to EC2..."
+                    sh "scp -v -i \"${PEM_FILE_PATH}\" target/${JAR_NAME} ${EC2_USER}@${EC2_HOST}:/home/ec2-user/ > scp_output.log 2>&1"
+                    def scpEndTime = System.currentTimeMillis()
+                    echo "File transfer completed in ${(scpEndTime - scpStartTime) / 1000} seconds"
 
-            // Debug Application Startup (ssh)
-            def sshStartTime = System.currentTimeMillis()
-            echo "Starting the application on EC2..."
-            bat "ssh -v -i \"${PEM_FILE_PATH}\" ${EC2_USER}@${EC2_HOST} nohup java -jar /home/ec2-user/${JAR_NAME} > /home/ec2-user/app.log 2>&1 &"
-            def sshEndTime = System.currentTimeMillis()
-            echo "Application startup completed in ${(sshEndTime - sshStartTime) / 1000} seconds"
+                    // SSH and Application Startup
+                    def sshStartTime = System.currentTimeMillis()
+                    echo "Starting the application on EC2..."
+                    sh "ssh -v -i \"${PEM_FILE_PATH}\" ${EC2_USER}@${EC2_HOST} 'nohup java -jar /home/ec2-user/${JAR_NAME} > /home/ec2-user/app.log 2>&1 &'"
+                    def sshEndTime = System.currentTimeMillis()
+                    echo "Application startup completed in ${(sshEndTime - sshStartTime) / 1000} seconds"
 
-            // Total deployment time
-            def deployEndTime = System.currentTimeMillis()
-            echo "Total deployment time: ${(deployEndTime - deployStartTime) / 1000} seconds"
+                    // Total deployment time
+                    def deployEndTime = System.currentTimeMillis()
+                    echo "Total deployment time: ${(deployEndTime - deployStartTime) / 1000} seconds"
                 }
             }
         }
@@ -62,7 +60,6 @@ pipeline {
 
     post {
         success {
-            archiveArtifacts 'target/*.jar'
             echo 'Deployment successful!'
         }
         failure {
